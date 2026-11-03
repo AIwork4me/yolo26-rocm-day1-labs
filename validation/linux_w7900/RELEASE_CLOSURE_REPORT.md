@@ -30,7 +30,7 @@
 | N3 `group{1..5}` shell 错误 | P1 | **本轮修复** | 03 报告 §2.1 改为每组各设 + 原因注明 |
 | N4 README "Linux 未复验"过期声明 | P1 | **本轮修复** | 更新为 W7900D 实测结论 + 证据链接 + CI 徽章 |
 | N5 执行副本体积 | P2 | 记录策略 | 不删改；建议后续归档策略 |
-| N6 无课前自检工具 | P1（课堂） | **本轮修复** | `scripts/preflight_classroom.py`（11/11 真机 PASS） |
+| N6 无课前自检工具 | P1（课堂） | **本轮修复** | `scripts/preflight_classroom.py`（升级后 12/12 真机 PASS） |
 | 真实学生导出 E2E | — | **NOT_RUN** | 本机无真实样本，如实标注（见 §4） |
 
 ## 2. 本轮额外解决的实际问题（PR #3 之外）
@@ -41,7 +41,7 @@
 4. **Lab E 单指标误导**：四指标一起读（各自回答的问题 + 单独引用的陷阱 + 学生空表），方法论不预置数值。
 5. **B/D/E 排障缺口**：三张常见错误表（症状→下一步），与 00/01/03 对齐。
 6. **导入报错不友好**：类别越界错误现附双语提示行（有效范围 + 标签格式），带回归测试。
-7. **课堂可操作性**：Preflight 11 项只读自检（真机 11/11；首轮自测抓出自身 2 缺陷并修复）；`group{1..5}` 修正；错峰表/降级路径/3 人试走验收表成文。
+7. **课堂可操作性**：Preflight 只读自检（升级 12 项，真机 12/12；首轮自测抓出自身 2 缺陷并修复）；`group{1..5}` 修正；错峰表/降级路径/3 人试走验收表成文。
 8. **README/讲师指南**：Linux 复验状态、CI 徽章、学生交互 vs 自动复验说明、清单入口。
 
 ## 3. 最终复验结果（详见 VALIDATION_MATRIX.md）
@@ -69,7 +69,7 @@
 2. 全部修改经三轮真机复现 + 41 项自动化回归 + 4 起门禁真实 FAIL 实证；证据链 SHA256 存证。
 3. 本轮 CI/教学/课堂增量与 PR #3 无耦合冲突（仅 md/脚本/测试/CI），叠加审阅成本低（PR 增量 diff）。
 
-**课堂发布判定：CONDITIONAL GO** —— 技术与体验门禁全绿；发布前置条件为 [CLASSROOM_READINESS_CHECKLIST.md](CLASSROOM_READINESS_CHECKLIST.md) A–C 节执行完毕（核心：Preflight 11/11 + 资产预置 + Kernel 预注册 + 预热一次）。Student Learning 结论保持 **PROVISIONAL** 直至 3 人真实试走（§F 表）。
+**课堂发布判定：CONDITIONAL GO** —— 技术与体验门禁全绿；发布前置条件为 [CLASSROOM_READINESS_CHECKLIST.md](CLASSROOM_READINESS_CHECKLIST.md) A–C 节执行完毕（核心：Preflight 12/12 + 资产预置 + Kernel 预注册 + 预热一次）。Student Learning 结论保持 **PROVISIONAL** 直至 3 人真实试走（§F 表）。
 
 ## 6. 下一步最有价值的三个动作
 
