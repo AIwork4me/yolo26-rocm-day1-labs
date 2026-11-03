@@ -47,3 +47,12 @@
 | 输出写到了意外位置 | `YOLO_COURSE_HOME` 已设置 | `print(home)` 确认;隔离测试用独立 home |
 | Windows 提示 `\/dev/kfd 不存在` | 该节点是 Linux 概念 | Notebook 仅探测记录,Windows 为 False 属预期 |
 | 图不显示(nbclient/无人值守) | matplotlib 后端 | 运行器已设 `MPLBACKEND=module://matplotlib_inline.backend_inline` |
+
+## Radeon Cloud 实操（云端 GPU 实例）
+
+| 症状 | 根因 | 处理 |
+|---|---|---|
+| `pip install` 在云端只有 ~50kB/s，装 jupyterlab(17MB) 跑了 6 分钟 | 云端到 PyPI 官方源被限速 | 换阿里云镜像：`pip install -i https://mirrors.aliyun.com/pypi/simple/ ...`；课程自带 `constraints-rocm.txt` 锁定 torch/torchvision/torchaudio 三件套，别让依赖漂移 |
+| 解压课程 ZIP 报 `unzip: command not found` | 云端镜像没装 unzip | 用 `python3 -c "import zipfile; zipfile.ZipFile('yolo26.zip').extractall('.')"` 解压 |
+| 练习 notebook 卡在 `TODO` 断言（Lab 00/01/03/04/05 要求「先预测再运行」） | 课程故意设的练习门槛，无人值守直接跑会中断 | 走课程复验通道：注入环境变量 `YOLO_PRACTICE_FILL='<各 lab 的 JSON 键>'`，用真实训练/推理数字填后重跑即通过（键名见各 notebook 顶部注释） |
+| 实例被删后 `/workspace` 外文件丢失；重 Launch 后 SSH 连不上 | 云端实例 72h 自动删除，`/workspace` 是持久卷但实例 IP/Port 会刷新 | 重要产物（权重/报告）放 `/workspace`；本地 `~/.ssh/config` 的 `HostName`/`Port` 在重 Launch 后需同步更新 |
