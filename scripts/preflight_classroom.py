@@ -175,6 +175,22 @@ def main() -> int:
         check('course kernel registered', False, f'jupyter_client unavailable: {exc}',
               'pip install jupyter_client inside the course venv')
 
+    # --- 7b: venv interpreter must live on persistent storage ------------------
+    # The container layer (/root, /tmp) is reset when the image is recycled; only
+    # /workspace survives. A venv whose python resolves into the ephemeral layer
+    # breaks on the next container — persist_env.sh relocates it.
+    try:
+        exe_real = Path(__import__('os').path.realpath(sys.executable))
+        volatile = str(exe_real).startswith('/root') or str(exe_real).startswith('/tmp')
+        check('venv interpreter on persistent storage', not volatile,
+              f'{sys.executable} -> {exe_real}',
+              'The venv python resolves into the ephemeral container layer — after an '
+              'image recycle the whole venv breaks. Run scripts/persist_env.sh to '
+              'relocate the interpreter to /workspace/env_persist')
+    except Exception as exc:
+        check('venv interpreter on persistent storage', False, str(exc)[:100],
+              'Investigate sys.executable resolution')
+
     # --- 8: disk ------------------------------------------------------------------
     free_gb = shutil.disk_usage(home if home.exists() else PROJECT).free / 2**30
     check('free disk space', free_gb >= 10, f'{free_gb:.1f} GiB free',

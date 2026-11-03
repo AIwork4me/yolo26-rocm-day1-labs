@@ -19,10 +19,12 @@
 | 9 | Lab C 12-Epoch 训练 | **PASS**（含于 #6；Notebook 41.05 s） | results.csv 12 行 + best.pt + 曲线 |
 | 10 | Lab E 12-Epoch A/B | **PASS**（含于 #6；Notebook 31.6 s；计时轮独占 GPU） | 下表 |
 | 11 | 工件 SHA256 与跨 Lab 状态链 | **PASS** 6/6 | 初始权重=官方 `9b09cc8b…`；cfg 记录一致；baseline≠variant；Lab D 消费 baseline；数据集 kind 正确；A/B 同验证口径 |
-| 12 | Preflight 课堂自检脚本 | **PASS 11/11**（真机实测，退出码 0） | `logs/preflight_demo.json`；首轮自测抓出自身 2 个缺陷并修复（int-dtype NMS 探针、Kernel 路径显示）——自检工具有效性实证 |
+| 12 | Preflight 课堂自检脚本 | **PASS 11/11→12/12**（真机实测；第 12 项=解释器持久化守卫，见行 17） | `logs/preflight_demo.json`；首轮自测抓出自身 2 个缺陷并修复（int-dtype NMS 探针、Kernel 路径显示）——自检工具有效性实证 |
 | 13 | CI workflow | **已新增**；本地无 torch 环境等价验证 PASS；GitHub Actions 首跑状态见 PR | `.github/workflows/ci.yml`（ubuntu+windows 双平台；守卫测试 `test_ci_workflow.py` 确保不装 torch、必跑 pytest、双平台覆盖） |
 | 14 | 证据完整性 | **PASS** SHA256SUMS 18/18 复核 | 历史证据零删改 |
 | 15 | 内核提示升级后再复验（每份 Notebook 前置内核选择提示 + metadata 钉 `yolo26-rocm7141`；代码单元仍 41） | **PASS 6/6 · 41/41 cells · 退出码 0**（pytest 47+1skip 双环境） | `executed/20261103_063xxx`（全新目录 `yolo_course_kernel_notice_check`）；首试因未预置 coco128.zip 在下载路径超时 FAIL——与受限网络文档一致，留作证据 |
+| 16 | **软门禁重构后再复验（无 `--practice-fill` 纯默认 Run-All）** | **PASS 6/6 · 41/41 cells · 退出码 0，零填充** | `executed/20261103_070xxx`（`yolo_course_softgate_check`）；5 份练习报告如实记录 `filled:false`；输出含真实结果 + 温和再运行邀请；`--practice-fill` 注入通道复测 filled:True 仍可用。设计原则变更：**安全门禁（ROCm/泄漏/指纹/A-B）保持硬失败；学习练习门禁从"阻断式"改为"默认可跑 + 邀请式 + filled 审计"** |
+| 17 | 环境持久化 + Notebook 恢复后 HEAD 终验（`d33dd41`；纯默认、解释器位于持久盘、JIT 缓存恢复态） | **PASS 6/6 · 41/41 cells · 退出码 0**（第 4 次独立复现：LabC val .3830；A/B .3829 vs .3385） | `executed/20261103_073434`（`yolo_course_final_head`）；5 份练习报告 filled:false；期间另修复一起 Jupyter UI autosave 写回源文件事件（03/04 输出污染被生成器一致性测试捕获并恢复，见提交 d33dd41） |
 
 ## 2. 本轮真机成绩（第 3 次独立复现，与前两轮确定性一致）
 
@@ -68,7 +70,7 @@
 | 学生交互 vs `--practice-fill` 区分 | ✅（README 说明块 + 练习格注释） |
 | 导入错误初学者提示行 | ✅（含回归测试） |
 | `group{1..5}` shell 修正 | ✅（03 报告 §2.1） |
-| Preflight 脚本 | ✅ 11/11 实测 |
+| Preflight 脚本 | ✅ 11/11→12/12 实测 |
 | README Linux 复验状态更新 + CI 徽章 | ✅ |
 | INSTRUCTOR_GUIDE 清单入口 | ✅ |
 

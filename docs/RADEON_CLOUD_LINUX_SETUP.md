@@ -92,3 +92,38 @@ Linux 上 `/workspace` 检测逻辑与原版完全一致。
 Windows PASS ≠ Linux PASS。Windows 端的 NOTEBOOK_EXECUTION_MATRIX 仅证明 Windows 原生路径;
 Linux Radeon Cloud 需在其环境真实跑一遍 `run_all_labs.py` 才能宣布 Linux PASS
 (静态兼容性已核查,见 validation/COMPATIBILITY_MATRIX.md)。
+
+## 7. 环境持久化与镜像回收恢复（重要）
+
+容器层（`/`、`/root`、`/opt`）在镜像回收后会被重置；**只有挂载盘 `/workspace` 保留**。
+按下表布置资产，即可做到"新容器零安装直接跑"：
+
+| 资产 | 位置 | 持久性 | 说明 |
+|---|---|---|---|
+| 仓库 + Notebook + 全部包（torch ROCm 栈） | `/workspace/yolo26-rocm-day1-labs`（含 `.venv`，约 6 GB） | ✅ 持久 | clone + §2B 安装一次 |
+| Python 解释器 | `/workspace/env_persist/uv-python` | ✅ 持久 | `.venv/bin/python` 软链指向此处——**venv 自包含的关键** |
+| 权重 / COCO8 / coco128.zip | 项目根 / `/workspace/datasets` / course home | ✅ 持久 | 见课堂清单 §6 预置链 |
+| Jupyter Kernel 注册（yolo26-rocm7141） | `/root/.local/share/jupyter/kernels` | ❌ 易失 | 恢复脚本自动处理 |
+| Ultralytics 设置（datasets_dir 等） | `/root/.config/Ultralytics` | ❌ 易失 | 同上 |
+| MIOpen 查找库 + COMGR JIT 编译缓存 | `/root/.cache/{miopen,comgr}`（约 584 MB） | ❌ 易失 | 同上——恢复后首次训练免 ~1 分钟编译 |
+| uv 原始 Python 安装 | `/root/.local/share/uv/python` | ❌ 易失 | venv 已不依赖它（持久副本为准） |
+
+**部署时执行一次**（把易失资产安置到持久盘，幂等）：
+
+```bash
+bash scripts/persist_env.sh
+```
+
+**新容器上执行一次**（约 30 秒，零网络）：
+
+```bash
+bash /workspace/yolo26-rocm-day1-labs/scripts/restore_env.sh
+```
+
+恢复脚本动作：校验 venv 自包含 → 恢复 Kernel 注册 → 恢复 Ultralytics 设置 →
+合并 JIT 缓存（不覆盖已生成的）→ 检查资产在位 → 跑 12 项 preflight 自检。
+之后直接打开 Notebook（Kernel 选 `YOLO26 - AMD ROCm 7.14.1`）即可运行。
+
+> 实测记录（2026-11-03）：模拟镜像回收（移走 `/root` 下解释器/内核注册/设置/JIT 缓存）后，
+> 仅凭 `/workspace` + 恢复脚本，Notebook 00+01 立即真机 PASS——零安装、零下载。
+> preflight 第 12 项（venv 解释器持久化守卫）会在解释器落回易失层时直接报 FAIL。

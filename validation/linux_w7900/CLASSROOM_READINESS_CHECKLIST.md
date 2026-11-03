@@ -17,7 +17,7 @@
   ```bash
   .venv/bin/python scripts/preflight_classroom.py --course-home /workspace/classroom_demo --json preflight_T-1.json
   ```
-  **11/11 PASS 才继续**；任何 FAIL 按输出的 next 提示处理。JSON 留档。
+  **12/12 PASS 才继续**；任何 FAIL 按输出的 next 提示处理。JSON 留档。
 - [ ] **资产预置**（若课堂网络不通 github release）：
   | 资产 | 位置 | 官方 SHA256（前 16 位） |
   |---|---|---|
@@ -87,7 +87,7 @@
 
 ## G · 发布判定
 
-- [ ] A–C 全部勾选 + Preflight 11/11 → **GO（Plan A）**
+- [ ] A–C 全部勾选 + Preflight 12/12 → **GO（Plan A）**
 - [ ] A–C 有未勾选但 E 路径就绪 → **CONDITIONAL GO（Plan B）**
 - [ ] Preflight 有 FAIL 且不可当日修复 → **NO-GO，改讲座 + 演示**
 - [ ] F 未执行 → Student Learning 结论保持 **PROVISIONAL**（不得宣称"经学生验证"）
