@@ -49,3 +49,12 @@ English | [中文](TROUBLESHOOTING.md)
 | Outputs land in an unexpected place | `YOLO_COURSE_HOME` is set | `print(home)` to confirm; use a dedicated home for isolated tests |
 | Windows says `/dev/kfd` does not exist | Those are Linux device nodes | The notebook only probes them; `False` on Windows is expected |
 | Plots don't show (headless nbclient) | matplotlib backend | The runner sets `MPLBACKEND=module://matplotlib_inline.backend_inline` |
+
+## Radeon Cloud (cloud GPU instance)
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| `pip install` crawls at ~50 kB/s on the cloud; jupyterlab (17 MB) took 6 min | The cloud node is rate-limited against PyPI's official index | Use the Aliyun mirror: `pip install -i https://mirrors.aliyun.com/pypi/simple/ ...`; the course ships `constraints-rocm.txt` pinning torch/torchvision/torchaudio — keep the trio from drifting |
+| Unzipping the course ZIP fails with `unzip: command not found` | The cloud image has no `unzip` | Use `python3 -c "import zipfile; zipfile.ZipFile('yolo26.zip').extractall('.')"` |
+| A practice notebook stalls on a `TODO` assertion (Labs 00/01/03/04/05 require "predict before you run") | The course intentionally gates practice; a headless run aborts there | Use the course's verification channel: set env `YOLO_PRACTICE_FILL='<per-lab JSON>'` with your real training/inference numbers, then re-run (key names are in each notebook's header comment) |
+| Files outside `/workspace` vanish after the instance is deleted; SSH fails after a re-Launch | Instances auto-delete after 72h; `/workspace` is a persistent volume but the instance IP/Port rotates | Keep important artifacts (weights/reports) under `/workspace`; update the `HostName`/`Port` in your local `~/.ssh/config` after each re-Launch |
