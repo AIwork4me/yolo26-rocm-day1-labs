@@ -24,6 +24,7 @@
 | 14 | 证据完整性 | **PASS** SHA256SUMS 18/18 复核 | 历史证据零删改 |
 | 15 | 内核提示升级后再复验（每份 Notebook 前置内核选择提示 + metadata 钉 `yolo26-rocm7141`；代码单元仍 41） | **PASS 6/6 · 41/41 cells · 退出码 0**（pytest 47+1skip 双环境） | `executed/20261103_063xxx`（全新目录 `yolo_course_kernel_notice_check`）；首试因未预置 coco128.zip 在下载路径超时 FAIL——与受限网络文档一致，留作证据 |
 | 16 | **软门禁重构后再复验（无 `--practice-fill` 纯默认 Run-All）** | **PASS 6/6 · 41/41 cells · 退出码 0，零填充** | `executed/20261103_070xxx`（`yolo_course_softgate_check`）；5 份练习报告如实记录 `filled:false`；输出含真实结果 + 温和再运行邀请；`--practice-fill` 注入通道复测 filled:True 仍可用。设计原则变更：**安全门禁（ROCm/泄漏/指纹/A-B）保持硬失败；学习练习门禁从"阻断式"改为"默认可跑 + 邀请式 + filled 审计"** |
+| 17 | 环境持久化 + Notebook 恢复后 HEAD 终验（`d33dd41`；纯默认、解释器位于持久盘、JIT 缓存恢复态） | **PASS 6/6 · 41/41 cells · 退出码 0**（第 4 次独立复现：LabC val .3830；A/B .3829 vs .3385） | `executed/20261103_073434`（`yolo_course_final_head`）；5 份练习报告 filled:false；期间另修复一起 Jupyter UI autosave 写回源文件事件（03/04 输出污染被生成器一致性测试捕获并恢复，见提交 d33dd41） |
 
 ## 2. 本轮真机成绩（第 3 次独立复现，与前两轮确定性一致）
 
