@@ -117,8 +117,8 @@ make('00_ROCm_Environment_Preflight.ipynb','00 / ROCm 环境预检与课程工�
    'Why learn this?','The environment is the foundation of all five later labs; a broken one wastes everything'),
   ('需要先懂什么？','会点 Jupyter 运行按钮即可，概念现场解释',
    'Prerequisites?','Being able to run a Jupyter cell; concepts are explained on the spot'),
-  ('我修改哪个参数？','练习格的 `SMOKE_N` 与 `MY_PREDICTION`（先预测再运行）',
-   'What do I change?','`SMOKE_N` and `MY_PREDICTION` in the practice cell (predict first, then run)'),
+  ('我修改哪个参数？','练习格的 `SMOKE_N` 与 `MY_PREDICTION`（默认可跑；先预测再改写才是完整体验）',
+   'What do I change?','`SMOKE_N` and `MY_PREDICTION` in the practice cell (runs by default; predicting first is the full experience)'),
   ('成功长什么样？','`torch_hip` 非空、GPU 名字打印、`HIP kernel smoke: PASS`',
    'What does success look like?','Non-empty `torch_hip`, your GPU name printed, `HIP kernel smoke: PASS`'),
   ('失败怎么自救？','本页"常见错误与下一步"表 → `docs/TROUBLESHOOTING.md`',
@@ -212,18 +212,20 @@ if STRICT_ROCM:
     assert y.device.type == 'cuda'  # ROCm 也报告 cuda device type
     print('HIP kernel smoke: PASS, output shape:', tuple(y.shape))'''),
  m('''### 练习：先预测，再运行（5 分钟）
-计算思维的第一步是**预测→运行→对照**。下面这个格子默认能跑通，但直接跑没有意义：
-1. 把 `SMOKE_N` 改成 256（或任意正整数）。
-2. **先**把你的预测写进 `MY_PREDICTION`（替换两个 TODO）。
-3. 运行，对照 `actual` 输出；猜错完全没关系——关键是养成先预测的习惯。
-你的预测会保存到 `reports/lab00_practice.json`，作为你动手的证据。''',
+本格**默认可直接运行**——你会立刻看到真实输出和一条"未预测"提示。完整体验只需三步：
+1. 先在心里预测：`SMOKE_N × SMOKE_N` 的矩阵乘法输出什么形状？落在哪个设备？
+2. 把预测写进 `MY_PREDICTION`（替换两个 TODO），顺手把 `SMOKE_N` 改成 256 或任意正整数。
+3. 再运行一次，对照 `actual` 输出；猜错完全没关系——先预测再验证才是目的。
+
+你的填写状态（`filled` 字段）会保存到 `reports/lab00_practice.json`——不阻断运行，但讲师能看到你是否真的动手了。''',
    '''### Try It Yourself: predict, then run (5 min)
-Computational thinking starts with **predict → run → compare**. The cell below runs as-is, but running it blindly teaches nothing:
-1. Change `SMOKE_N` to 256 (or any positive integer).
-2. **First** write your prediction into `MY_PREDICTION` (replace both TODOs).
-3. Run it and compare with the `actual` output; being wrong is fine — the habit of predicting first is the point.
-Your prediction is saved to `reports/lab00_practice.json` as evidence of hands-on work.'''),
- c('''# 学生练习：预测 → 运行 → 对照（修改 SMOKE_N 与 MY_PREDICTION 后运行）
+This cell **runs as-is** — you will immediately see the real output plus an "unfilled" hint. The full experience is three steps:
+1. Predict first, in your head: what shape does a `SMOKE_N × SMOKE_N` matmul produce? Which device does it live on?
+2. Write your prediction into `MY_PREDICTION` (replace both TODOs), and change `SMOKE_N` to 256 or any positive integer.
+3. Run again and compare with the `actual` output; being wrong is fine — predicting first is the point.
+
+Your fill state (the `filled` flags) is saved to `reports/lab00_practice.json` — nothing is blocked, but the instructor can see whether you actually engaged.'''),
+ c('''# 学生练习：预测 → 运行 → 对照（默认可直接运行；写下预测再跑一次才是完整体验）
 SMOKE_N = 128
 MY_PREDICTION = {'shape': 'TODO: 写下你预测的输出形状，如 (128, 128)',
                  'device': 'TODO: 你预测结果张量落在哪个设备？'}
@@ -238,8 +240,7 @@ if os.environ.get('YOLO_PRACTICE_FILL'):
 
 import torch
 
-for key, value in MY_PREDICTION.items():
-    assert not str(value).startswith('TODO'), f'请先填写 {key} 的预测再运行——直接运行无法形成预测习惯'
+filled = {key: not str(value).startswith('TODO') for key, value in MY_PREDICTION.items()}
 probe = torch.randn((SMOKE_N, SMOKE_N), device='cuda:0')
 outcome = probe @ probe
 torch.cuda.synchronize()
@@ -247,10 +248,13 @@ print('actual shape:', tuple(outcome.shape), '| actual device:', outcome.device)
 matched = str(MY_PREDICTION['shape']).replace(' ', '') == str(tuple(outcome.shape))
 print('your prediction:', MY_PREDICTION)
 print('prediction matched:', matched, '（猜错不扣分；先预测再验证才是目的）')
+if not all(filled.values()):
+    print('提示：你还没有写下预测（TODO 未替换）。本格已用默认值跑通——现在回去把 MY_PREDICTION '
+          '换成你的猜测（可顺手把 SMOKE_N 改成 256），再运行一次对照 actual 输出。这一步才是练习的核心。')
 write_json(home / 'reports/lab00_practice.json',
            {'smoke_n': SMOKE_N, 'prediction': MY_PREDICTION,
             'actual': {'shape': list(outcome.shape), 'device': str(outcome.device)},
-            'matched': matched})'''),
+            'matched': matched, 'filled': filled})'''),
  m('''### 冻结预训练权重（所有 A/C/E 使用相同模型）
 为了避免课程中途的自动下载或不同版本导致 A/B 实验起点不一致，首次联网时缓存 `yolo26n.pt`，后续统一从 `/workspace/yolo_course/artifacts/yolo26n.pt` 读取。缓存成功后记录 SHA256。''',
    '''### Pinning the Pretrained Weights (labs A/C/E share one model)
@@ -296,8 +300,8 @@ make('01_Lab_A_Predict_and_Threshold.ipynb','01 / Lab A · 推理、BBox 与置�
    'Why learn this?','Inference is how a model is used; the confidence threshold is the first knob you will tune daily'),
   ('需要先懂什么？','完成 00；知道"框 + 类别 + 分数"是什么即可',
    'Prerequisites?','Lab 00; knowing what "box + class + score" means'),
-  ('我修改哪个参数？','`box_pred` 坐标与 `MY_PREDICTED_IOU`（先预测！）',
-   'What do I change?','`box_pred` coordinates and `MY_PREDICTED_IOU` (predict first!)'),
+  ('我修改哪个参数？','`box_pred` 坐标与 `MY_PREDICTED_IOU`（默认可跑；先预测再对照）',
+   'What do I change?','`box_pred` coordinates and `MY_PREDICTED_IOU` (runs by default; predict first, then compare)'),
   ('成功长什么样？','三张图只差框数；`xyxy/conf/cls` 三段数组；单调性 PASS',
    'What does success look like?','Three images differing only in box count; three small arrays; monotonicity PASS'),
   ('失败怎么自救？','本页常见错误表（模型缺失 / NMS / 单调性反例）',
@@ -392,7 +396,7 @@ if example_result.boxes is not None and len(example_result.boxes) > 0:
     print('class ID:', example_result.boxes.cls[:3].cpu().numpy())
 else:
     print('此阈值下没有检测目标；属于有效的实验结果。')'''),
- c('''# 练习：亲手计算两个框的交并比（几何示例，不是模型测出的 mAP）
+ c('''# 练习：亲手计算两个框的交并比（几何示例，不是模型测出的 mAP；默认可直接运行）
 from course.lab_utils import iou_xyxy
 
 box_true = (160, 120, 480, 360)
@@ -407,11 +411,16 @@ if os.environ.get('YOLO_PRACTICE_FILL'):
         if _v is not None:
             MY_PREDICTED_IOU = _v
 
-assert not str(MY_PREDICTED_IOU).startswith('TODO'), '请先写下你的预测（0–1 之间的数）再运行'
+filled = not str(MY_PREDICTED_IOU).startswith('TODO')
 overlap = iou_xyxy(box_true, box_pred)
 print('实际 IoU =', round(overlap, 4), '| 你的预测 =', MY_PREDICTED_IOU)
-print('修改 box_pred 的坐标再运行一次，观察 IoU 怎么变；猜错不扣分，先预测才是目的')
-assert 0 <= overlap <= 1'''),
+print('修改 box_pred 的坐标再运行一次，观察 IoU 怎么变')
+if not filled:
+    print('提示：还没写预测。现在把 MY_PREDICTED_IOU 换成你猜的数（0–1 之间），再跑一次看差多远——猜错不扣分。')
+assert 0 <= overlap <= 1
+write_json(home / 'reports/lab_a_iou_practice.json',
+           {'box_true': box_true, 'box_pred': box_pred,
+            'predicted': MY_PREDICTED_IOU, 'actual_iou': round(overlap, 4), 'filled': filled})'''),
  c('''for item in summary:
     print(f"conf={item['conf']:.2f}  boxes={item['detections']}")
     display(Image.open(item['prediction_image']).resize((640, 480)))
@@ -786,15 +795,15 @@ print('Validation only (NOT test):', summary)'''),
 2. 验证集 mAP50 怎么变？
 3. 以你的数字为证据：过拟合了吗？为什么？
 
-把答案写进下面的 `MY_READING` 再运行保存。你的判断会在 Lab D 与官方验证指标对照——现在写错完全没关系，先形成"用证据下结论"的习惯。''',
+下面的练习格**默认可直接运行**——它会打印你自己 results.csv 的首末行真实数字。用这些数字把 `MY_READING` 三问答完（替换 TODO）再跑一次保存。你的判断会在 Lab D 与官方验证指标对照——写错完全没关系，用证据下结论才是目的；填写状态记入 `filled` 字段。''',
    '''### Try It Yourself: read your own training curve (judge first, verify later)
 Training is not "run and done". Open the tail of `results.csv` above and `results.png`, and answer three questions **yourself**:
 1. How did train box_loss move from epoch 1 to 12?
 2. How did validation mAP50 move?
 3. With your numbers as evidence: is the model overfitting? Why?
 
-Write your answers into `MY_READING` below, then run the cell to save them. Lab D will confront your reading with the official metrics — being wrong now is fine; build the habit of concluding from evidence first.'''),
- c('''# 学生练习：读曲线（填写 MY_READING 后运行；引用你自己 results.csv 里的数字）
+The practice cell below **runs by default** — it first prints the real numbers from your own results.csv. Answer the three questions using them (replace the TODOs), then run again to save. Lab D will confront your reading with the official metrics — being wrong is fine; concluding from evidence is the point, and the `filled` flags record whether you did.'''),
+ c('''# 学生练习：读曲线（默认可直接运行——先看真实数字，再写下你的判断）
 import csv
 
 MY_READING = {
@@ -808,13 +817,18 @@ if os.environ.get('YOLO_PRACTICE_FILL'):
     if _p.is_file():
         for _k, _v in json.loads(_p.read_text(encoding='utf-8')).get('lab_c_my_reading', {}).items():
             MY_READING[_k] = _v
-for key, value in MY_READING.items():
-    assert not str(value).startswith('TODO'), f'请先填写 {key}——用自己的 results.csv 数字回答后再运行'
+filled = {key: not str(value).startswith('TODO') for key, value in MY_READING.items()}
 with (Path(cfg['baseline_run']) / 'results.csv').open(encoding='utf-8') as f:
     rows = list(csv.DictReader(f))
-print('你的 epoch 数:', len(rows), '| 首行/末行 epoch:', rows[0].get('epoch'), '/', rows[-1].get('epoch'))
-write_json(home / 'reports/lab_c_my_reading.json', MY_READING)
-print('曲线阅读已保存到 reports/lab_c_my_reading.json；Lab D 会用官方指标对照你的判断。')'''),
+first, last = rows[0], rows[-1]
+print('你的 epoch 数:', len(rows), '| 首行/末行 epoch:', first.get('epoch'), '/', last.get('epoch'))
+print('train/box_loss: 首行 =', first.get('train/box_loss'), '| 末行 =', last.get('train/box_loss'))
+print('mAP50:         首行 =', first.get('metrics/mAP50(B)'), '| 末行 =', last.get('metrics/mAP50(B)'))
+print('val/box_loss:  首行 =', first.get('val/box_loss'), '| 末行 =', last.get('val/box_loss'))
+if not all(filled.values()):
+    print('提示：三问还没作答（TODO 未替换）。上面就是你自己的 results.csv 真实数字——用它们把 '
+          'MY_READING 填完再运行一次，保存你的结论。Lab D 会用官方指标对照你的判断。')
+write_json(home / 'reports/lab_c_my_reading.json', {**MY_READING, 'filled': filled})'''),
  m('''### 为什么基线固定训练用 `imgsz=512`，评测用 `imgsz=640`？
 训练输入尺寸属于训练方案，下一步 Lab E 会只改变训练尺寸；为了公平比较两组模型，Lab E 会用同一个 `imgsz=640` 做评测。这是一种课堂控制变量方案，不是所有工业评测任务必须如此。
 
@@ -977,12 +991,12 @@ if len(failures) < 5:
  m('''### 学生工作：手动归因至少 5 个实际错误（如果有）
 打开 `reports/lab_d_errors.csv` 和并排对照图，添加 **现象、证据、可能根因、下次实验验证方法**。把推测与已确认根因区分开。
 
-下面提供一个可保存的归因练习格：从 `lab_d_errors.csv` 里挑**一个**你最好奇的错误，把四项分析写进 `MY_ANALYSIS` 再运行（写错不扣分，空着或 TODO 才是不合格）。''',
+下面提供一个可保存的归因练习格：从 `lab_d_errors.csv` 里挑**一个**你最好奇的错误，把四项分析写进 `MY_ANALYSIS` 再运行。练习格**默认可直接运行**（会先打印你选中错误行的真实证据）；写错不扣分——`filled` 字段会如实记录你是否完成了归因。''',
    '''### Student Work: manually attribute at least 5 real errors (if any)
 Open `reports/lab_d_errors.csv` and the side-by-side boards, then add **symptom, evidence, suspected root cause, and how the next experiment would verify it**. Keep hypotheses clearly separate from confirmed causes.
 
-The practice cell below makes this concrete: pick **one** error you are most curious about from `lab_d_errors.csv`, fill the four fields of `MY_ANALYSIS`, then run it (wrong hypotheses cost nothing; empty or TODO answers do).'''),
- c('''# 学生练习：独立归因一个真实错误（填写 MY_ANALYSIS 后运行）
+The practice cell below makes this concrete: pick **one** error you are most curious about from `lab_d_errors.csv`, fill the four fields of `MY_ANALYSIS`, then run it. The cell **runs by default** (it prints the real evidence of your chosen error row first); wrong hypotheses cost nothing — the `filled` flags honestly record whether you completed the attribution.'''),
+ c('''# 学生练习：独立归因一个真实错误（默认可直接运行——先看证据，再写下你的归因）
 import csv
 
 with (home / 'reports/lab_d_errors.csv').open(encoding='utf-8-sig') as f:
@@ -1000,15 +1014,17 @@ if os.environ.get('YOLO_PRACTICE_FILL'):
     if _p.is_file():
         for _k, _v in json.loads(_p.read_text(encoding='utf-8')).get('lab_d_error_analysis', {}).items():
             MY_ANALYSIS[_k] = _v
+filled = {key: not str(value).startswith('TODO') for key, value in MY_ANALYSIS.items()}
 assert error_rows, '没有错误行——恭喜，但请如实报告并挑一张困难样本做分析'
 assert 0 <= MY_ERROR_INDEX < len(error_rows), f'索引需在 0 到 {len(error_rows) - 1} 之间'
-for key, value in MY_ANALYSIS.items():
-    assert not str(value).startswith('TODO'), f'请先填写 {key}——归因练习不允许留空'
 chosen = error_rows[MY_ERROR_INDEX]
 print('你选择的错误:', chosen['image'], chosen['error'], '| score:', chosen['score'],
       '| max_iou_gt:', chosen['max_iou_gt'])
-write_json(home / 'reports/lab_d_my_error_analysis.json', {'chosen': chosen, 'analysis': MY_ANALYSIS})
-print('归因已保存到 reports/lab_d_my_error_analysis.json。')'''),
+if not all(filled.values()):
+    print('提示：四字段还没填（TODO 未替换）。上面这行就是真实证据——打开 assets/lab_d_errors/ 里对应的'
+          '失败对照图，把现象/证据/假设/验证写进 MY_ANALYSIS，再运行一次保存你的归因。')
+write_json(home / 'reports/lab_d_my_error_analysis.json',
+           {'chosen': chosen, 'analysis': MY_ANALYSIS, 'filled': filled})'''),
  m('''### 思考题 / 面试必答
 1. 为什么官方 mAP50 和单一 conf=0.25 下的 Precision 不是同一个东西？
 2. IoU=0.5 的定位标准会漏掉什么信息？
@@ -1091,15 +1107,15 @@ assert args['imgsz'] == 512, '此 Notebook 的实验方案假定 baseline 训练
 2. 你预测哪组训练更快？依据是什么？（提示：输入变小≠必然更快，想想数据加载、JIT 预热等因素）
 3. 一句话说明你的理由。
 
-把预测写进 `MY_HYPOTHESIS` 再运行——它会**在结果产生前**封存到 `reports/lab_e_my_hypothesis.json`。实验结束后回来对照：预测错了恰恰是学习收获最大的时刻。''',
+练习格**默认可直接运行**（未写假设会如实记录并继续）；但**强烈建议**在运行下一格之前把预测写进 `MY_HYPOTHESIS`——它会在结果产生前封存到 `reports/lab_e_my_hypothesis.json`，实验结束后回来对照：预测错了恰恰是学习收获最大的时刻。''',
    '''### Try It Yourself: write your hypothesis first (before seeing any result)
 The first step of a controlled experiment is not running code — it is **predicting**. Before the variant training starts, answer:
 1. Which arm do you predict will score higher on mAP50-95? (baseline 512 / imgsz416 / not sure)
 2. Which arm do you predict trains faster, and why? (hint: smaller inputs ≠ automatically faster — think about data loading, JIT warm-up, …)
 3. One sentence for your reasoning.
 
-Fill `MY_HYPOTHESIS` and run the cell — it is **sealed before any result exists** into `reports/lab_e_my_hypothesis.json`. You will come back to compare after the experiment; a wrong prediction is where the learning happens.'''),
- c('''# 学生练习：假设先行（在运行 Variant 训练之前填写并运行）
+The cell **runs by default** (an unwritten hypothesis is honestly recorded and the lab continues); but you are **strongly encouraged** to fill `MY_HYPOTHESIS` before running the next cell — it is sealed into `reports/lab_e_my_hypothesis.json` before any result exists, and you will come back to compare after the experiment: a wrong prediction is where the learning happens.'''),
+ c('''# 学生练习：假设先行（默认可直接运行；强烈建议在 Variant 训练前写下你的预测）
 MY_HYPOTHESIS = {
     'mAP50_95_winner': 'TODO: baseline(512) / imgsz416 / 不确定——你预测哪组 mAP50-95 更高？',
     'training_time_winner': 'TODO: 你预测哪组训练更快？为什么（不只是分辨率一个因素）',
@@ -1111,10 +1127,12 @@ if os.environ.get('YOLO_PRACTICE_FILL'):
     if _p.is_file():
         for _k, _v in json.loads(_p.read_text(encoding='utf-8')).get('lab_e_hypothesis', {}).items():
             MY_HYPOTHESIS[_k] = _v
-for key, value in MY_HYPOTHESIS.items():
-    assert not str(value).startswith('TODO'), f'请先填写 {key}——假设必须在看到结果之前写下'
-write_json(home / 'reports/lab_e_my_hypothesis.json', MY_HYPOTHESIS)
-print('假设已封存到 reports/lab_e_my_hypothesis.json（先于任何 Variant 结果）。开始 Variant 训练。')'''),
+filled = {key: not str(value).startswith('TODO') for key, value in MY_HYPOTHESIS.items()}
+if not all(filled.values()):
+    print('提示：假设还没写（TODO 未替换）。下一格 Variant 训练约需 30–60 秒——正好用这段时间把你的'
+          '预测写进 MY_HYPOTHESIS 再重新运行本格封存；实验结束后你会回来对照它。')
+write_json(home / 'reports/lab_e_my_hypothesis.json', {**MY_HYPOTHESIS, 'filled': filled})
+print('假设记录已保存到 reports/lab_e_my_hypothesis.json（先于任何 Variant 结果）。开始 Variant 训练。')'''),
  m('''### Variant 训练等待说明
 - 与 Lab C 相同：12 Epoch、约 30–60 秒；若这是本机今天第一次训练，还会多出 ~1 分钟 MIOpen JIT 预热（只发生一次）。
 - **这期间不要启动其他训练或评测**——A/B 的"相同 GPU 条件"要求本臂独占显卡，否则计时不可比。''',

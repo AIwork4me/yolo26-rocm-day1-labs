@@ -94,6 +94,8 @@ NON_STRICT_NOTEBOOKS = {'02'}
 
 
 def test_every_notebook_keeps_a_student_action_cell():
+    import re
+    hard_todo_gate = re.compile(r"^\s*assert\s+not\s+.*startswith\('TODO'\)", re.MULTILINE)
     for old in sorted(NOTEBOOKS_DIR.glob('*.ipynb')):
         prefix = old.name[:2]
         markers = STUDENT_ACTION_MARKERS.get(prefix)
@@ -114,9 +116,17 @@ def test_every_notebook_keeps_a_student_action_cell():
                 f'{old.name}: the correction cell must refuse TODO placeholder reasons '
                 'when enabled')
             continue
-        # Strict engagement: the practice cell asserts that the student replaced
-        # the TODO placeholder, so Run-All cannot silently skip the exercise.
+        # Soft-gate engagement model (release closure): practice cells must run
+        # with defaults (Run-All green), record honest `filled` flags, save a
+        # report, and print a re-run invitation when unfilled.
         practice = [src for src in sources if any(m in src for m in hit)]
-        assert any("startswith('TODO')" in src for src in practice), (
-            f'{old.name}: practice cell must assert that the student replaced the TODO '
-            'placeholder (Run-All must not silently skip the exercise)')
+        assert practice, f'{old.name}: practice cell not found'
+        assert all(not hard_todo_gate.search(src) for src in practice), (
+            f'{old.name}: practice cell must not hard-block on TODO — defaults must '
+            'run (runnable-by-default principle; engagement is invited, not forced)')
+        assert all('filled' in src and 'write_json' in src for src in practice), (
+            f'{old.name}: practice cell must record `filled` flags and save a report '
+            '(auditable engagement without blocking)')
+        assert all('提示' in src for src in practice), (
+            f'{old.name}: practice cell must print a friendly re-run invitation '
+            'when the TODO placeholders are untouched')

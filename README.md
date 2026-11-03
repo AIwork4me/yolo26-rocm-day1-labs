@@ -52,9 +52,11 @@ uv 建环境 → 安装 AMD ROCm PyTorch(wheel 来自 repo.amd.com,非 PyPI)→ 
 2. 全部输出写入项目内 `yolo_course/`(可用环境变量 `YOLO_COURSE_HOME` 重定向)。
 3. 想一键复验?`powershell -File scripts/validate_windows.ps1`(依赖检查 → GPU 冒烟 → 回归测试 → 6 份 Notebook 全量执行)。
 
-> **学生交互 vs 自动复验**:六份 Notebook 各有一个"学生主动操作"练习格(预测/读曲线/错误归因/假设先行),
-> 带 TODO 占位断言——**不自己填写就无法运行通过**,这是设计而非故障。讲师或 CI 的无人值守复验走
-> `run_all_labs.py --practice-fill <json>` 显式通道(注入值会原样出现在输出与报告里),与学生的课堂运行互不影响。
+> **学生交互 vs 自动复验**:六份 Notebook 各有一个"学生主动操作"练习格(预测/读曲线/错误归因/假设先行)。
+> 练习格**默认可直接运行**——先用默认值跑通全链,输出真实结果并温和提示替换 TODO;学生随后修改参数、
+> 再跑、再对照。填写状态以 `filled` 字段保存在各 `reports/*practice*.json` / `*my_*.json` 中,
+> 讲师据此了解参与度,不阻断任何人。讲师/CI 演示可选用 `run_all_labs.py --practice-fill <json>`
+> 注入样例(注入值原样出现在输出与报告里)。
 
 ## 📓 六份 Notebook
 
