@@ -49,3 +49,12 @@ English | [中文](TROUBLESHOOTING.md)
 | Outputs land in an unexpected place | `YOLO_COURSE_HOME` is set | `print(home)` to confirm; use a dedicated home for isolated tests |
 | Windows says `/dev/kfd` does not exist | Those are Linux device nodes | The notebook only probes them; `False` on Windows is expected |
 | Plots don't show (headless nbclient) | matplotlib backend | The runner sets `MPLBACKEND=module://matplotlib_inline.backend_inline` |
+
+## Radeon Cloud (cloud GPU instance)
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| `pip install` crawls at ~50 kB/s on the cloud; jupyterlab (17 MB) took 6 min (**observed on this test instance, not a universal platform guarantee**) | The cloud node is rate-limited against PyPI's official index (observed here) | Only use the Aliyun mirror for **ordinary Python dependencies**: `pip install -i https://mirrors.aliyun.com/pypi/simple/ ...`; AMD ROCm PyTorch wheels still follow the pinned instructions via `repo.amd.com` — do not mix them; the course ships `constraints-rocm.txt` pinning the torch/torchvision/torchaudio trio |
+| Unzipping the course ZIP fails with `unzip: command not found` | The cloud image has no `unzip` | Use `python3 -c "import zipfile; zipfile.ZipFile('yolo26.zip').extractall('.')"` |
+| A practice notebook runs fine without filling the TODOs (Labs 00/01/03/04/05), but the `filled` flags record "unfilled" | Current **soft practice gate**: the cell runs by default and never blocks; completion is recorded via `filled` into `reports/*.json` so the instructor can see engagement (aligns with `build_notebooks.py`; the old blocking behavior is gone) | Students need no extra step; `YOLO_PRACTICE_FILL` is a **headless verification channel (not for students)** — it takes a **path to a JSON file**, not inline content, used by instructors/CI to inject filled examples: `python scripts/run_all_labs.py --practice-fill /path/to/practice.json` |
+| Files outside `/workspace` vanish after the instance is deleted; SSH fails after a re-Launch (**observed on this test instance, not a universal guarantee**) | This test instance auto-deletes after ~72h; `/workspace` is a persistent volume but the instance IP/Port rotates | Keep important artifacts (weights/reports) under `/workspace`; update the `HostName`/`Port` in your local `~/.ssh/config` after each re-Launch |

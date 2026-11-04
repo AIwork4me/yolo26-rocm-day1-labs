@@ -47,3 +47,12 @@
 | 输出写到了意外位置 | `YOLO_COURSE_HOME` 已设置 | `print(home)` 确认;隔离测试用独立 home |
 | Windows 提示 `\/dev/kfd 不存在` | 该节点是 Linux 概念 | Notebook 仅探测记录,Windows 为 False 属预期 |
 | 图不显示(nbclient/无人值守) | matplotlib 后端 | 运行器已设 `MPLBACKEND=module://matplotlib_inline.backend_inline` |
+
+## Radeon Cloud 实操（云端 GPU 实例）
+
+| 症状 | 根因 | 处理 |
+|---|---|---|
+| `pip install` 在云端只有 ~50kB/s，装 jupyterlab(17MB) 跑了 6 分钟（**本测试环境观察，非平台普遍行为**） | 云端到 PyPI 官方源被限速（本环境观察） | 仅**普通 Python 依赖**可换阿里云镜像：`pip install -i https://mirrors.aliyun.com/pypi/simple/ ...`；AMD ROCm 的 PyTorch wheel 仍按固定指引走 `repo.amd.com`，勿混用；课程自带 `constraints-rocm.txt` 锁定 torch/torchvision/torchaudio 三件套，别让依赖漂移 |
+| 解压课程 ZIP 报 `unzip: command not found` | 云端镜像没装 unzip | 用 `python3 -c "import zipfile; zipfile.ZipFile('yolo26.zip').extractall('.')"` 解压 |
+| 练习 notebook 不填 `TODO` 也能直接运行（Lab 00/01/03/04/05），但 `filled` 字段会记录「未填」 | 当前是**软练习门禁**：cell 默认可跑、不阻断，完成情况通过 `filled` 写入 `reports/*.json`，讲师据此看是否真动手（对齐 `build_notebooks.py`，旧的阻塞式行为已弃用） | 学生无需任何额外操作；`YOLO_PRACTICE_FILL` 是**无人值守复验通道（学生不需要）**，它接受「一个 JSON 文件的路径」而非内联内容，用于讲师/自动化注入已填写样例：`python scripts/run_all_labs.py --practice-fill /path/to/practice.json` |
+| 实例被删后 `/workspace` 外文件丢失；重 Launch 后 SSH 连不上（**本测试环境观察，非平台普遍保证**） | 本测试实例约 72h 自动删除，`/workspace` 是持久卷但实例 IP/Port 会刷新 | 重要产物（权重/报告）放 `/workspace`；本地 `~/.ssh/config` 的 `HostName`/`Port` 在重 Launch 后需同步更新 |
