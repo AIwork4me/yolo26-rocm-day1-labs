@@ -40,7 +40,9 @@ create a uv environment → install AMD ROCm PyTorch (wheels from repo.amd.com, 
 ### Option B · Linux / AMD Radeon Cloud
 
 Follow **[docs/RADEON_CLOUD_LINUX_SETUP.en.md](docs/RADEON_CLOUD_LINUX_SETUP.en.md)**: upload and unzip into `/workspace`,
-then use the platform's ROCm kernel or build the same uv environment. (The Linux path is statically compatibility-checked; it has not been re-validated on a real cloud GPU yet.)
+then use the platform's ROCm kernel or build the same uv environment.
+
+> **Linux validated on real hardware (2026-11-03)**: AMD Radeon Pro W7900D (gfx1100, 48 GB) · Ubuntu 24.04 · isolated uv environment · torch 2.12.0+rocm7.14.1. All six notebooks, 41/41 code cells, two 12-epoch training runs, and the complete A/B experiment passed. Evidence: [validation/linux_w7900/](validation/linux_w7900/FINAL_REPORT.md) (Chinese report).
 
 ### Running order
 
