@@ -84,3 +84,60 @@ def test_grouped_scenes_never_cross_splits(tmp_path):
     for row in rows:
         groups.setdefault(row["scene"], set()).add(row["split"])
     assert all(len(splits) == 1 for splits in groups.values())
+
+
+def test_blank_label_lines_do_not_inflate_box_count(tmp_path):
+    """Blank lines are not boxes: the manifest must agree with the dataset QA.
+
+    Exported YOLO .txt files often carry leading/trailing blank lines (editors,
+    X-AnyLabeling, manual merges). Both `label_errors` and `read_labels` skip
+    blank lines, so `dataset_manifest.json["boxes"]` must use the same rule;
+    otherwise the report contradicts the QA result for the very same dataset.
+    """
+    images, labels, classes = make_export(tmp_path)
+    for path in sorted(labels.glob("*.txt"))[:5]:
+        text = path.read_text(encoding="utf-8")
+        path.write_text("\n" + text + "\n\n", encoding="utf-8")
+    dest = tmp_path / "student"
+    report = import_anylabeling_yolo(images, labels, classes, dest)
+    qa = inspect_dataset(dest / "data.yaml")
+    assert qa["pass"], qa["problems"]
+    assert report["boxes"] == sum(x["boxes"] for x in qa["splits"].values())
+
+
+def test_image_named_classes_keeps_its_label(tmp_path):
+    """A photo called classes.jpg must not lose its legitimate classes.txt.
+
+    Only the category file itself may be skipped. Excluding every .txt with
+    that *name* silently drops the label of an image whose stem is `classes`,
+    producing a misleading "Missing labels" error.
+    """
+    images, labels, classes = make_export(tmp_path)
+    (images / "sample_0000.png").rename(images / "classes.png")
+    (labels / "sample_0000.txt").rename(labels / "classes.txt")
+    dest = tmp_path / "student"
+    report = import_anylabeling_yolo(images, labels, classes, dest)
+    assert report["images"] == 30
+    copied = list((dest / "labels").rglob("classes.txt"))
+    assert len(copied) == 1
+    assert copied[0].read_text(encoding="utf-8") == (labels / "classes.txt").read_text(encoding="utf-8")
+
+
+def test_classes_file_inside_labels_dir_is_excluded(tmp_path):
+    """The category file passed as an argument is never read as a label file."""
+    images, labels, classes = make_export(tmp_path)
+    inner = labels / "classes.txt"
+    inner.write_text(classes.read_text(encoding="utf-8"), encoding="utf-8")
+    classes.unlink()
+    dest = tmp_path / "student"
+    report = import_anylabeling_yolo(images, labels, inner, dest)
+    assert report["images"] == 30
+
+
+def test_stray_classes_copy_in_labels_dir_is_ignored(tmp_path):
+    """A stray copy of the category list in labels/ is not an orphan label."""
+    images, labels, classes = make_export(tmp_path)
+    (labels / "classes.txt").write_text(classes.read_text(encoding="utf-8"), encoding="utf-8")
+    dest = tmp_path / "student"
+    report = import_anylabeling_yolo(images, labels, classes, dest)
+    assert report["images"] == 30

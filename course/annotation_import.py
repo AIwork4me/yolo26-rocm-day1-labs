@@ -70,8 +70,18 @@ def import_anylabeling_yolo(images_dir: Path, labels_dir: Path, classes_txt: Pat
         raise ValueError("At least 9 images required for a three-way teaching split")
     if len({x.name for x in images}) != len(images) or len({x.stem for x in images}) != len(images):
         raise ValueError("Image names/stems must be unique (even across extensions)")
-    labels = {p.stem: p for p in labels_dir.glob("*.txt") if p.name != classes_txt.name}
-    extras = set(labels) - {p.stem for p in images}
+    image_stems = {p.stem for p in images}
+    labels = {}
+    for label_file in labels_dir.glob("*.txt"):
+        # Skip the category file itself, not every .txt sharing its name: a
+        # photo named classes.jpg has a perfectly valid classes.txt label.
+        if label_file.resolve() == classes_txt:
+            continue
+        if label_file.stem not in image_stems and label_file.name == classes_txt.name:
+            # A stray copy of the category list inside labels/ is not a label.
+            continue
+        labels[label_file.stem] = label_file
+    extras = set(labels) - image_stems
     if extras:
         raise ValueError(f"Orphan YOLO label files: {sorted(extras)}")
     missing = [p.name for p in images if p.stem not in labels]
@@ -85,7 +95,9 @@ def import_anylabeling_yolo(images_dir: Path, labels_dir: Path, classes_txt: Pat
         bad = label_errors(source_text, len(names))
         if bad:
             issues.extend(f"{label}: {error}" for error in bad)
-        box_count += len(source_text.splitlines()) if source_text.strip() else 0
+        # Blank lines are not boxes. label_errors() and read_labels() both skip
+        # them, so count the same way or the manifest contradicts dataset QA.
+        box_count += sum(1 for line in source_text.splitlines() if line.strip())
     if issues:
         raise ValueError(
             "Invalid YOLO detection labels; no files copied:\n" + "\n".join(issues[:30]) +
